@@ -184,36 +184,39 @@ plt.show()
 
 # %%
 import pandas as pd
-from lifelines import CoxPHFitter
-import matplotlib.pyplot as plt
+from lifelines import KaplanMeierFitter
+from lifelines.statistics import logrank_test
 
-# Create a sample dataset
-data = {
-    'time': [5, 10, 15, 20, 25, 30],
-    'event': [1, 1, 0, 1, 0, 1]
+# Create two sample datasets for comparison
+group1 = {
+    'time': [10, 15, 20, 25, 30],
+    'event': [1, 0, 1, 0, 1]
 }
 
-df = pd.DataFrame(data)
+group2 = {
+    'time': [10, 15, 20, 25, 30],
+    'event': [0, 0, 0, 0, 0]
+}
 
-# Fit Cox proportional hazards model
-cph = CoxPHFitter()
-cph.fit(df, 'time', event_col='event')
+df_group1 = pd.DataFrame(group1)
+df_group2 = pd.DataFrame(group2)
 
-# Generate survival curve
-survival_prob = cph.predict_survival_function(df)
+# Fit Kaplan-Meier estimators for each group
+kmf_group1 = KaplanMeierFitter()
+kmf_group1.fit(df_group1['time'], event_observed=df_group1['event'])
 
-# Plot the survival curve
-plt.plot(survival_prob.index, survival_prob.values)
-plt.xlabel('Time')
-plt.ylabel('Survival Probability')
-plt.title('Survival Curve')
-plt.show()
+kmf_group2 = KaplanMeierFitter()
+kmf_group2.fit(df_group2['time'], event_observed=df_group2['event'])
 
-# Get hazard ratios
-hr = cph.hazard_ratios_
-print(hr)
+# Perform log-rank test
+results = logrank_test(df_group1['time'], df_group2['time'], df_group1['event'], df_group2['event'])
+
+# Print the log-rank test statistic and p-value
+print("Log-Rank Test Statistic: %.2f" % results.test_statistic)
+print("Log-Rank Test p-value: %.4f" % results.p_value)
 
 # %%
+#logrank for 2 groups
 import pandas as pd
 from lifelines import KaplanMeierFitter
 from lifelines.statistics import logrank_test
@@ -245,6 +248,37 @@ results = logrank_test(df_group1['time'], df_group2['time'], df_group1['event'],
 # Print the log-rank test statistic and p-value
 print("Log-Rank Test Statistic: %.2f" % results.test_statistic)
 print("Log-Rank Test p-value: %.4f" % results.p_value)
+
+# %%
+import pandas as pd
+from lifelines import CoxPHFitter
+import matplotlib.pyplot as plt
+
+# Create a sample dataset
+data = {
+    'time': [5, 10, 15, 20, 25, 30],
+    'event': [1, 1, 0, 1, 0, 1]
+}
+
+df = pd.DataFrame(data)
+
+# Fit Cox proportional hazards model
+cph = CoxPHFitter()
+cph.fit(df, 'time', event_col='event')
+
+# Generate survival curve
+survival_prob = cph.predict_survival_function(df)
+
+# Plot the survival curve
+plt.plot(survival_prob.index, survival_prob.values)
+plt.xlabel('Time')
+plt.ylabel('Survival Probability')
+plt.title('Survival Curve')
+plt.show()
+
+# Get hazard ratios
+hr = cph.hazard_ratios_
+print(hr)
 
 # %%
 import pandas as pd
@@ -290,7 +324,10 @@ from lifelines import CoxPHFitter
 data = {
     'time': [5, 10, 15, 20, 25, 30],
     'event': [1, 1, 0, 1, 0, 1],
-    'group': [0, 0, 1, 1, 0, 1]
+    'group': [0, 0, 1, 1, 0, 1],
+    'censored': [0, 1, 0, 1, 0, 1],
+    'sex': [1, 0, 1, 0, 0, 1],
+    'age': [20, 25, 30, 35, 40, 45]
 }
 
 df = pd.DataFrame(data)
